@@ -2,6 +2,7 @@
   ;;(:require)
   (:use clojure.core
         [korma.core :only [insert values]]
+        [clj-time.coerce :only [from-string to-sql-date]]
         [clj-yaml.core :only [parse-string]]))
 
 (comment example structure
@@ -21,6 +22,19 @@
   (and (re-matches #".*_id"
                    (subs (str name) 1))
        name))
+
+(defn convert-object-dates [field-map]
+  (reduce-kv (fn [result-map field-name field-value]
+               (let [name-string (subs (str field-name) 1)]
+                 (if (or (re-matches #".*_date" name-string)
+                         (re-matches #".*_timestamp" name-string)
+                         (re-matches #".*_date_time" name-string)
+                         (re-matches #".*_dt_tm" name-string))
+                   (assoc result-map field-name
+                          (to-sql-date (from-string field-value)))
+                   result-map)))
+             field-map field-map))
+
 
 ;; resolves entity names for a single instance referring to those names,
 ;; so that they can be inserted
@@ -43,15 +57,18 @@
      (fn [entities name instance]
        (assoc-in
         entities [entity-name :instances name]
-        (val (first
-              (insert entity
-                      (values
-                       (merge instance
-                              (resolved-entity-names
-                               entities
-                               (select-keys instance
-                                            (filter id-field-name?
-                                                    (keys instance)))))))))))
+        ;; XXX :id doesn't work for sqlite
+        ;; instead, it would be (val (first (insert ...)))
+        (:id
+         (insert entity
+                 (values
+                  (convert-object-dates
+                   (merge instance
+                          (resolved-entity-names
+                           entities
+                           (select-keys instance
+                                        (filter id-field-name?
+                                                (keys instance)))))))))))
      entities objects)))
 
 (defn load-unnamed-objects [entities entity-name objects]
@@ -59,12 +76,13 @@
     (doseq [instance objects]
       (insert entity
               (values
-               (merge instance
-                      (resolved-entity-names
-                       entities
-                       (select-keys instance
-                                    (filter id-field-name?
-                                            (keys instance)))))))))
+               (convert-object-dates
+                (merge instance
+                       (resolved-entity-names
+                        entities
+                        (select-keys instance
+                                     (filter id-field-name?
+                                             (keys instance))))))))))
   entities)
 
 (defn load-fixtures [{:keys [entity-namespace yaml-file yaml-string]}]
