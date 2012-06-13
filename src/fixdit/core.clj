@@ -5,7 +5,7 @@
         [clj-time.coerce :only [from-string to-sql-date]]
         [clj-yaml.core :only [parse-string]]))
 
-(comment example structure
+(comment example input structure
          {"entity1" {"object1" {"field1" 1
                                 "field2" "value"
                                 "field3" 2.5}
@@ -42,23 +42,24 @@
 ;; and returns a map of  {"blah_id" id ...}
 (defn resolved-entity-names [entities field-map]
   (reduce-kv (fn [result-map field-name instance-name]
+               #_(println (keyword
+                           (subs (str field-name)
+                                 1 (- (.length
+                                       (str field-name)) 3))))
                (assoc result-map field-name
-                      (get-in entities [(keyword
-                                         (subs (str field-name)
-                                               1 (- (.length
-                                                     (str field-name)) 3)))
-                                        :instances
+                      (get-in entities [:instances
                                         (keyword instance-name)])))
              {} field-map))
 
 (defn load-named-objects [entities entity-name objects]
-  (let [entity (get-in entities [entity-name :entity])] 
+  (let [entity (get-in entities [:entities entity-name])]
     (reduce-kv
      (fn [entities name instance]
        (assoc-in
-        entities [entity-name :instances name]
+        entities [:instances name]
         ;; XXX :id doesn't work for sqlite
-        ;; instead, it would be (val (first (insert ...)))
+        ;; instead, it would be the following:
+        ;; (val (first 
         (:id
          (insert entity
                  (values
@@ -69,10 +70,11 @@
                            (select-keys instance
                                         (filter id-field-name?
                                                 (keys instance)))))))))))
+         ;; )
      entities objects)))
 
 (defn load-unnamed-objects [entities entity-name objects]
-  (let [entity (get-in entities [entity-name :entity])]
+  (let [entity (get-in entities [:entities entity-name])]
     (doseq [instance objects]
       (insert entity
               (values
@@ -94,7 +96,7 @@
                                            (symbol (subs
                                                     (str entity-name) 1))))
                        entities
-                       (assoc entities entity-name {:entity entity})]
+                       (assoc-in entities [:entities entity-name] entity)]
                    (cond (seq? instances)
                          (load-unnamed-objects entities entity-name
                                                instances)

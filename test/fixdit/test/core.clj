@@ -87,62 +87,68 @@
 
          
 (deftest resolve-entity-names-single-field
-  (is (= (resolved-entity-names {:entity1 {:entity entity1
-                                            :instances {:instance1 1
-                                                        :instance2 2}}}
+  (is (= (resolved-entity-names {:entities {:entity1 entity1}
+                                 :instances {:instance1 1
+                                             :instance2 2}}
                                 {:entity1_id "instance1"})
          {:entity1_id 1})))
 
 (deftest resolve-entity-names-multiple-fields
-  (is (= (resolved-entity-names {:entity1 {:entity entity1
-                                            :instances {:instance1 1
-                                                        :nstance2 2}}
-                                 :entity2 {:entity entity2
-                                            :instances {:instance3 3
-                                                        :instance4 4}}}
+  (is (= (resolved-entity-names {:entities {:entity1 entity1
+                                            :entity entity2}
+                                 :instances {:instance1 1
+                                             :instance2 2
+                                             :instance3 3
+                                             :instance4 4}}
                                 {:entity1_id "instance1"
                                  :entity2_id "instance4"})
          {:entity1_id 1
           :entity2_id 4})))
 
+(deftest resolve-entity-names-id-field-not-entity
+  (is (= (resolved-entity-names {:entities {:entity1 entity1}
+                                 :instances {:instance1 1
+                                             :instance2 2}}
+                                {:something_else_entity1_id "instance1"})
+         {:something_else_entity1_id 1})))
+
 (deftest resolve-entity-names-missing-name
-  (is (= (resolved-entity-names {:entity1 {:entity entity1
-                                            :instances {:instance1 1
-                                                        :instance2 2}}}
+  (is (= (resolved-entity-names {:entities {:entity1 entity1}
+                                 :instances {:instance1 1
+                                             :instance2 2}}
                                 {:entity1_id "instance3"})
          {:entity1_id nil})))
 
 (deftest named-object-assigned-id
-  (let [entities (load-named-objects {:entity1 {:entity entity1
-                                                :instances {}}}
+  (let [entities (load-named-objects {:entities {:entity1 entity1}
+                                      :instances {}}
                                      :entity1
                                      {:object1 {:field1 1
                                                 :field2 "value"
                                                 :field3 2.5}})]
-    (is (= (get-in entities [:entity1 :instances :object1])
+    (is (= (get-in entities [:instances :object1])
            (get-in (select entity1 (where {:field1 1}) (fields [:id]))
                    [0 :id])))))
 
 (deftest named-object-assigned-id-not-beginning-with-id
-  (let [entities (load-named-objects {:entity3 {:entity entity3
-                                                :instances {}}}
+  (let [entities (load-named-objects {:entities {:entity3 entity3}
+                                      :instances {}}
                                      :entity3
                                      {:object1 {:field1 1
                                                 :field2 "value"
                                                 :field3 2.5}})]
-    (is (= (get-in entities [:entity3 :instances :object1])
+    (is (= (get-in entities [:instances :object1])
            (get-in (select entity3 (where {:field1 1}) (fields [:id]))
                    [0 :id])))))
 
 (deftest unnamed-objects-joined
-  (let [entities (load-named-objects {:entity1 {:entity entity1
-                                                 :instances {}}
-                                      :entity2 {:entity entity2
-                                                 :instances {}}}
+  (let [entities (load-named-objects {:entities {:entity1 entity1
+                                                 :entity2 entity2}
+                                      :instances {}}
                                      :entity1
                                      {:object1 {:field1 1
-                                               :field2 "value"
-                                               :field3 2.5}})]
+                                                :field2 "value"
+                                                :field3 2.5}})]
     (load-unnamed-objects entities :entity2
                           [{:field_a "value"
                             :entity1_id "object1"}])
