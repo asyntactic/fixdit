@@ -25,7 +25,6 @@
 
 (defn convert-object-dates [field-map]
   (reduce-kv (fn [result-map field-name field-value]
-               ;(println (to-sql-date (from-string field-value)))
                (let [name-string (subs (str field-name) 1)]
                  (if (or (re-matches #".*_date" name-string)
                          (re-matches #".*_timestamp" name-string)
