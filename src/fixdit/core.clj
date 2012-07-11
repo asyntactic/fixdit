@@ -2,7 +2,7 @@
   ;;(:require)
   (:use clojure.core
         [korma.core :only [insert values]]
-        [clj-time.coerce :only [from-string to-sql-date]]
+        [clj-time.coerce :only [from-string to-timestamp]]
         [clj-yaml.core :only [parse-string]]))
 
 (comment example input structure
@@ -25,13 +25,14 @@
 
 (defn convert-object-dates [field-map]
   (reduce-kv (fn [result-map field-name field-value]
+               ;(println (to-sql-date (from-string field-value)))
                (let [name-string (subs (str field-name) 1)]
                  (if (or (re-matches #".*_date" name-string)
                          (re-matches #".*_timestamp" name-string)
                          (re-matches #".*_date_time" name-string)
                          (re-matches #".*_dt_tm" name-string))
                    (assoc result-map field-name
-                          (to-sql-date (from-string field-value)))
+                          (to-timestamp (from-string field-value)))
                    result-map)))
              field-map field-map))
 
