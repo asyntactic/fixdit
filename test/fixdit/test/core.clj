@@ -25,7 +25,7 @@
                              :subname "./fixdit.test.sqlite3"
                              :create true})
 
-(declare entity1 entity2 entity2)
+(declare entity1 entity2 entity3 entity4 entity5)
 
 (defentity entity1
   (entity-fields :field1 :field2 :field3)
@@ -38,6 +38,14 @@
 (defentity entity3
   (entity-fields :field1 :field2 :field3)
   (has-many entity2))
+
+(defentity entity4
+  (entity-fields :field_a)
+  (belongs-to entity5 (:fk :entity5_id)))
+
+(defentity entity5
+  (entity-fields :field_b)
+  (belongs-to entity4 (:fk :entity4_id)))
 
 (defn fixture [f]
   (open-global fixdit-test-connection)
@@ -57,10 +65,24 @@
                  ;; id is not first - to test that it can be anywhere
                  (integer :id :primary-key :auto-inc)
                  (float :field3)))
+
+  ;; these two tables mutually refer to each other, guaranteeing that there
+  ;; will be an ordering problem where at least one row doesn't have one of
+  ;; it's foreign-key ids at the time it's first inserted.
+  (create (table :entity4
+                 (integer :id :primary-key :auto-inc)
+                 (integer :entity5_id)
+                 (integer :field_a)))
+  (create (table :entity5
+                 (integer :id :primary-key :auto-inc)
+                 (integer :entity4_id)
+                 (integer :field_b)))
   (f)
   (drop (table :entity1))
   (drop (table :entity2))
   (drop (table :entity3))
+  (drop (table :entity4))
+  (drop (table :entity5))
   (close-global))
 
 (use-fixtures :each fixture)
@@ -157,6 +179,18 @@
            (get-in (select entity2 (where {:field_a "value"})
                            (fields [:entity1_id]))
                    [0 :entity1_id])))))
+
+(deftest named-objects-circular-dependency
+  (let [fixtures {:entity4 {:object1 {:field_a 100
+                                      :entity5_id "object2"}}
+                  :entity5 {:object2 {:field_b 200
+                                      :entity4_id "object1"}}}]
+    (load-fixture-map 'fixdit.test.core fixtures)
+    (let [data4 (first (select entity4 (where {:field_a 100})))
+          data5 (first (select entity5 (where {:field_b 200})))]
+      (clojure.pprint/pprint [data4 data5])
+      (is (= (:id data4) (:entity4_id data5)))
+      (is (= (:id data5) (:entity5_id data4))))))
 
 (deftest load-fixtures-from-string
   (let [fixture-string

@@ -6,4 +6,5 @@
                  [org.xerial/sqlite-jdbc "3.7.2"]
                  [clj-time "0.4.2"]
                  [clj-yaml "0.3.1"]]
-  :dev-dependencies [[org.clojure/java.jdbc "0.2.1"]])
+  :dev-dependencies [[org.clojure/java.jdbc "0.2.1"]]
+  :plugins [[lein-swank "1.4.4"]])

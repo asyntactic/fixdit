@@ -87,9 +87,7 @@
                                              (keys instance))))))))))
   entities)
 
-(defn load-fixtures [{:keys [entity-namespace yaml-file yaml-string]}]
-  (let [fixtures (or (and yaml-file (parse-string (slurp yaml-file)))
-                     (parse-string yaml-string))]
+(defn load-fixture-map [entity-namespace fixtures]
     (reduce-kv (fn [entities entity-name instances]
                  (let [entity (var-get
                                (ns-resolve entity-namespace
@@ -104,4 +102,9 @@
                          (load-named-objects entities entity-name
                                              instances))))
                {}
-               fixtures)))
+               fixtures))
+
+(defn load-fixtures [{:keys [entity-namespace yaml-file yaml-string]}]
+  (let [fixtures (or (and yaml-file (parse-string (slurp yaml-file)))
+                     (parse-string yaml-string))]
+    (load-fixture-map entity-namespace fixtures)))
