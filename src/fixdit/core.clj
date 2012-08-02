@@ -55,8 +55,9 @@
 ;; It is needed because they don't return the same data structure from
 ;; insert. :id doesn't work for sqlite, instead, it must be (val (first RESULT))
 (defn id-func [x]
-  ;; (:id x)
-  (val (first x)))
+  (:id x)
+  ;; (val (first x))
+  )
 
 (defn load-named-objects [entities entity-name objects]
   (let [entity (get-in entities [:entities entity-name])]
