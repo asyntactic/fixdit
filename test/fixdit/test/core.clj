@@ -188,9 +188,11 @@
     (load-fixture-map 'fixdit.test.core fixtures)
     (let [data4 (first (select entity4 (where {:field_a 100})))
           data5 (first (select entity5 (where {:field_b 200})))]
-      (clojure.pprint/pprint [data4 data5])
       (is (= (:id data4) (:entity4_id data5)))
       (is (= (:id data5) (:entity5_id data4))))))
+
+;; unnamed objects circular dependency
+;; self-joined named objects
 
 (deftest load-fixtures-from-string
   (let [fixture-string
