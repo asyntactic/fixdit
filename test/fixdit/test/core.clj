@@ -10,7 +10,7 @@
                [schema :only [table integer float varchar]]
                [connectivity :only [open-global close-global]])
         [clj-time.core :only [date-time]]
-        [clj-time.coerce :only [to-sql-date]]))
+        [clj-time.coerce :only [to-timestamp]]))
 
 ;; XXX there is currently a problem with fixit.core - in load-named-objects,
 ;; we look up the id of the inserted object. SQLite and PostgreSQL do not
@@ -80,10 +80,10 @@
                                 :a_test_dt_tm "2001-1-4"})
          {:id 1
           :some_text "foobarbaz"
-          :test_date (to-sql-date (date-time 2001 1 1))
-          :a_test_timestamp (to-sql-date (date-time 2001 1 2))
-          :a_test_date_time (to-sql-date (date-time 2001 1 3))
-          :a_test_dt_tm (to-sql-date (date-time 2001 1 4))})))
+          :test_date (to-timestamp (date-time 2001 1 1))
+          :a_test_timestamp (to-timestamp (date-time 2001 1 2))
+          :a_test_date_time (to-timestamp (date-time 2001 1 3))
+          :a_test_dt_tm (to-timestamp (date-time 2001 1 4))})))
 
          
 (deftest resolve-entity-names-single-field

@@ -59,8 +59,8 @@
         entities [:instances name]
         ;; XXX :id doesn't work for sqlite
         ;; instead, it would be the following:
-        ;; (val (first 
-        (:id
+         (val (first 
+        ;;(:id
          (insert entity
                  (values
                   (convert-object-dates
@@ -70,7 +70,7 @@
                            (select-keys instance
                                         (filter id-field-name?
                                                 (keys instance)))))))))))
-         ;; )
+          )
      entities objects)))
 
 (defn load-unnamed-objects [entities entity-name objects]
