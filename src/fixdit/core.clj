@@ -17,6 +17,16 @@
                      {"field" "another value"
                       "entity1_id" "object2"}]})
 
+;; this is provided as a quick way of switching between sqlite and postgresql
+;; It is needed because they don't return the same data structure from
+;; insert. :id doesn't work for sqlite, instead, it must be (val (first RESULT))
+(def ^:dynamic db-type nil)
+(defn id-func [x]
+  (case db-type
+    :postgresql (:id x)
+    :sqlite (val (first x))
+    ;; sqlite by default
+    (val (first x))))
 
 (defn id-field-name? [name]
   (and (re-matches #".*_id"
@@ -50,14 +60,6 @@
                       (get-in entities [:instances
                                         (keyword instance-name)])))
              {} field-map))
-
-;; this is provided as a quick way of switching between sqlite and postgresql
-;; It is needed because they don't return the same data structure from
-;; insert. :id doesn't work for sqlite, instead, it must be (val (first RESULT))
-(defn id-func [x]
-  (:id x)
-  ;; (val (first x))
-  )
 
 (defn load-named-objects [entities entity-name objects]
   (let [entity (get-in entities [:entities entity-name])]
@@ -133,7 +135,9 @@
               {}
               fixtures)))
 
-(defn load-fixtures [{:keys [entity-namespace yaml-file yaml-string]}]
+(defn load-fixtures [{:keys [entity-namespace yaml-file yaml-string
+                             db-type]}]
   (let [fixtures (or (and yaml-file (parse-string (slurp yaml-file)))
                      (parse-string yaml-string))]
-    (load-fixture-map entity-namespace fixtures)))
+    (binding [db-type db-type]
+      (load-fixture-map entity-namespace fixtures))))

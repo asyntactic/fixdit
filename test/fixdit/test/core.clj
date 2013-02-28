@@ -1,5 +1,4 @@
 (ns fixdit.test.core
-  ;;s(:require [fixdit.test.models :as models])
   (:refer-clojure :exclude [integer float drop insert values])
   (:use [clojure.test]
         fixdit.core
