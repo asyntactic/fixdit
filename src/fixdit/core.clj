@@ -23,7 +23,7 @@
 (def ^:dynamic db-type nil)
 (defn id-func [x]
   (case db-type
-    :postgresql (:id x)
+    :postgres (:id x)
     :sqlite (val (first x))
     ;; sqlite by default
     (val (first x))))
